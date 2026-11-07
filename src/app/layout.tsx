@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { ImageManifestProvider } from "@/components/ImageManifest";
 import { brand } from "@/config/brand";
 import { bodyFont, displayFont } from "@/config/fonts";
@@ -42,6 +43,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <ImageManifestProvider files={getImageManifest()}>
           {children}
         </ImageManifestProvider>
+        <Analytics />
       </body>
     </html>
   );
