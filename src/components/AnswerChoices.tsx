@@ -6,6 +6,7 @@ import { NextStepNotice } from "@/components/NextStepNotice";
 import { ArrowRightIcon, CheckIcon } from "@/components/icons";
 import { primaryButtonClass, primaryButtonIconClass } from "@/components/ui";
 import type { QuestionOption } from "@/config/funnel";
+import { metaTrackCustomOnce } from "@/lib/meta-pixel";
 import { getStepNav } from "@/lib/navigation";
 import { loadProgress, saveProgress } from "@/lib/storage";
 import type { AnswerKey, Answers, StepId } from "@/lib/types";
@@ -49,13 +50,19 @@ export function AnswerChoices<K extends AnswerKey>({
   const [showSoon, setShowSoon] = useState(false);
   const selected = picked ?? saved;
 
-  function persist(value: NonNullable<Answers[K]>, resumeAt: StepId) {
+  function persist(value: NonNullable<Answers[K]>, resumeAt: StepId): Answers {
     const progress = loadProgress();
+    const answers: Answers = { ...progress?.answers, [answerKey]: value };
+    // Primeira resposta do quiz (Meta Pixel, sem enviar a resposta).
+    if (Object.keys(progress?.answers ?? {}).length === 0) {
+      metaTrackCustomOnce("QuizStarted");
+    }
     saveProgress({
       stepId: resumeAt,
-      answers: { ...progress?.answers, [answerKey]: value },
+      answers,
       startedTracked: progress?.startedTracked ?? false,
     });
+    return answers;
   }
 
   function choose(id: NonNullable<Answers[K]>) {
@@ -78,12 +85,16 @@ export function AnswerChoices<K extends AnswerKey>({
     event.preventDefault();
     if (!selected) return;
 
+    const answers = persist(selected, next && nextHref ? next : stepId);
+    // Todas as perguntas respondidas (Meta Pixel, sem enviar as respostas).
+    if (answers.comportamento && answers.obstaculo && answers.desejo) {
+      metaTrackCustomOnce("QuizCompleted");
+    }
+
     if (next && nextHref) {
-      persist(selected, next);
       router.push(nextHref);
     } else {
       // A próxima etapa ainda não foi publicada: fica aqui, com a resposta salva.
-      persist(selected, stepId);
       setShowSoon(true);
     }
   }

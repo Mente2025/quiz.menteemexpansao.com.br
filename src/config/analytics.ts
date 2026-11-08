@@ -36,3 +36,20 @@ export const analyticsSettings = {
 export const analyticsAdapters: Array<(event: AnalyticsPayload) => void> = [
   // Adicione aqui as integrações reais quando estiverem configuradas.
 ];
+
+/**
+ * META PIXEL (Meta Ads)
+ * Código oficial carregado em src/app/layout.tsx; eventos em src/lib/meta-pixel.ts.
+ * Envia só eventos comerciais (PageView, ViewContent, InitiateCheckout,
+ * QuizStarted, QuizCompleted) — nunca as respostas do quiz.
+ * Deixe vazio ("") para desligar o Pixel.
+ */
+export const META_PIXEL_ID = "1629538182203726";
+
+/**
+ * InitiateCheckout no clique do botão de compra (etapa 8).
+ * A Cakto, quando o Pixel é configurado no produto, também envia
+ * InitiateCheckout ao abrir o checkout. Para não contar duas vezes,
+ * mude para `false` se ativar o Pixel na Cakto.
+ */
+export const META_INITIATE_CHECKOUT_ON_CLICK = true;

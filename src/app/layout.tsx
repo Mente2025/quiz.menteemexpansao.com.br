@@ -1,8 +1,12 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { ImageManifestProvider } from "@/components/ImageManifest";
+import { MetaPixelPageViews } from "@/components/MetaPixel";
+import { META_PIXEL_ID } from "@/config/analytics";
 import { brand } from "@/config/brand";
 import { bodyFont, displayFont } from "@/config/fonts";
 import { getImageManifest } from "@/lib/image-manifest";
+import { metaPixelScript } from "@/lib/meta-pixel";
 import "./globals.css";
 
 // A imagem de compartilhamento vem de src/app/opengraph-image.png e
@@ -39,6 +43,25 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${displayFont.variable} ${bodyFont.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-sans">
+        {META_PIXEL_ID && (
+          <>
+            {/* Meta Pixel: vai para o <head> e roda antes de qualquer evento. */}
+            <Script id="meta-pixel" strategy="beforeInteractive">
+              {metaPixelScript}
+            </Script>
+            <noscript>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                height="1"
+                width="1"
+                style={{ display: "none" }}
+                alt=""
+                src={`https://www.facebook.com/tr?id=${META_PIXEL_ID}&ev=PageView&noscript=1`}
+              />
+            </noscript>
+            <MetaPixelPageViews />
+          </>
+        )}
         <ImageManifestProvider files={getImageManifest()}>
           {children}
         </ImageManifestProvider>

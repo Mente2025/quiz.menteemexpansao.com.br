@@ -1,5 +1,6 @@
 import { CheckoutButton } from "@/components/CheckoutButton";
 import { HighlightedHeadline } from "@/components/HighlightedHeadline";
+import { MetaViewContent } from "@/components/MetaPixel";
 import { OptionalImage } from "@/components/OptionalImage";
 import { HighlightCard } from "@/components/ReflectionBlocks";
 import { StepImage } from "@/components/StepImage";
@@ -47,6 +48,8 @@ export function OfferStep() {
 
   return (
     <StepShell stepId={id}>
+      <MetaViewContent />
+
       {/* Abertura */}
       <h1 className="mt-8 animate-rise text-balance text-center font-display [animation-delay:80ms]">
         <span className="block text-[length:clamp(1.3rem,5.6vw,1.65rem)] font-normal leading-[1.25] text-ivory/80">
