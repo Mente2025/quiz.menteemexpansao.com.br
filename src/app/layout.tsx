@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { ImageManifestProvider } from "@/components/ImageManifest";
@@ -65,6 +66,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <ImageManifestProvider files={getImageManifest()}>
           {children}
         </ImageManifestProvider>
+        {/* Vercel Web Analytics: visitas e páginas vistas (só no site publicado). */}
+        <Analytics />
       </body>
     </html>
   );
