@@ -1,7 +1,6 @@
 /**
- * Texto do título com um trecho em itálico e sublinhado à mão em vermelho.
- * Use dentro do <h1> da etapa. Se `highlight` não estiver no texto, mostra
- * o título normal.
+ * Texto do título com um trecho sublinhado à mão na cor da marca.
+ * Use dentro do <h1>. Se `highlight` não estiver no texto, mostra o título normal.
  */
 export function HighlightedHeadline({
   text,
@@ -22,7 +21,7 @@ export function HighlightedHeadline({
     <>
       {before}
       <span className="whitespace-nowrap">
-        <span className="relative inline-block font-normal italic">
+        <span className="relative inline-block italic">
           {highlight}
           <svg
             aria-hidden="true"
@@ -31,7 +30,7 @@ export function HighlightedHeadline({
             fill="none"
             stroke="currentColor"
             strokeLinecap="round"
-            className="pointer-events-none absolute -bottom-[0.2em] left-[-3%] h-[0.38em] w-[106%] animate-draw text-ember [animation-delay:900ms]"
+            className="pointer-events-none absolute -bottom-[0.2em] left-[-3%] h-[0.36em] w-[106%] text-ember"
           >
             <path
               strokeWidth="2.4"
@@ -39,7 +38,7 @@ export function HighlightedHeadline({
             />
             <path
               strokeWidth="1.4"
-              opacity="0.65"
+              opacity="0.6"
               d="M16 13.6c44-3.3 98-4 170-1.4"
             />
           </svg>

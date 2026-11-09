@@ -2,10 +2,11 @@
  * Meta Pixel — eventos comerciais do funil.
  * O código oficial é carregado no <head> por src/app/layout.tsx; aqui ficam
  * o próprio código e os helpers de evento. Só roda no navegador.
- * Nunca envie respostas do quiz ou dados pessoais por aqui.
+ * Nunca envie o nome, as respostas ou o resultado do quiz por aqui.
+ * Limitações atuais da Meta para este Pixel: veja src/config/analytics.ts.
  */
 import { META_PIXEL_ID } from "@/config/analytics";
-import { offer } from "@/config/offer";
+import { product } from "@/config/quizData";
 
 declare global {
   interface Window {
@@ -27,7 +28,7 @@ fbq('track', 'PageView');`;
 
 /** Identificação do produto — a mesma em ViewContent e InitiateCheckout. */
 export const metaProduct = {
-  content_name: offer.productName,
+  content_name: product.name,
   content_ids: ["eu_me_escolho"],
   content_type: "product",
 };
@@ -46,15 +47,28 @@ export function metaTrack(event: string, params?: Params) {
 
 const sentInMemory = new Set<string>();
 
-/** Evento personalizado enviado no máximo uma vez por sessão (aba do navegador). */
-export function metaTrackCustomOnce(event: string) {
+/** `true` na primeira vez da sessão (aba do navegador); depois, `false`. */
+function firstTimeThisSession(event: string) {
   const key = `eme-meta-${event}`;
   try {
-    if (window.sessionStorage.getItem(key)) return;
+    if (window.sessionStorage.getItem(key)) return false;
     window.sessionStorage.setItem(key, "1");
+    return true;
   } catch {
-    if (sentInMemory.has(event)) return;
-    sentInMemory.add(event);
+    if (sentInMemory.has(key)) return false;
+    sentInMemory.add(key);
+    return true;
   }
+}
+
+/** Evento padrão enviado no máximo uma vez por sessão. */
+export function metaTrackOnce(event: string, params?: Params) {
+  if (typeof window === "undefined" || !firstTimeThisSession(event)) return;
+  send("track", event, params);
+}
+
+/** Evento personalizado enviado no máximo uma vez por sessão. */
+export function metaTrackCustomOnce(event: string) {
+  if (typeof window === "undefined" || !firstTimeThisSession(event)) return;
   send("trackCustom", event);
 }

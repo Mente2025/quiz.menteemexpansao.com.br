@@ -1,6 +1,6 @@
-import { IntroStep } from "@/components/steps/IntroStep";
+import { StartScreen } from "@/components/quiz/StartScreen";
 
-/** Etapa 1 — Abertura do quiz "Eu Me Escolho". */
+/** Tela inicial do quiz "Eu Me Escolho". */
 export default function Home() {
-  return <IntroStep />;
+  return <StartScreen />;
 }

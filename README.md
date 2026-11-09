@@ -1,26 +1,38 @@
-# Por Que Você Vive Histórias Parecidas no Amor? — quiz Eu Me Escolho
+# Em que fase do término você está? — quiz Eu Me Escolho
 
-Quiz de 8 etapas (`quiz-padroes-no-amor`), feito com **Next.js 16** (App Router),
-**React 19**, **Tailwind CSS 4** e TypeScript. Funciona como site estático:
-todas as páginas são geradas no build.
+Quiz de vendas do **Eu Me Escolho** (Mente em Expansão), feito com
+**Next.js 16** (App Router), **React 19**, **Tailwind CSS 4** e TypeScript.
+Todas as telas têm fundo branco e são geradas no build.
 
-| Etapa | Endereço    |
-| ----- | ----------- |
-| 1     | `/`         |
-| 2 – 8 | `/etapa-2` … `/etapa-8` |
+| Tela                         | Endereço                          |
+| ---------------------------- | --------------------------------- |
+| Início                       | `/`                               |
+| 10 perguntas (uma por tela)  | `/pergunta/1` … `/pergunta/10`    |
+| Primeiro nome                | `/nome`                           |
+| Resultado A/B/C + oferta     | `/resultado`                      |
 
-As respostas ficam salvas só no navegador do visitante (nada é enviado a
-servidores). O botão de compra da etapa 8 leva ao checkout da Cakto.
+Os endereços do quiz antigo (`/etapa-2` … `/etapa-8`) levam ao início.
+As respostas e o nome ficam só no navegador do visitante, na aba aberta
+(nada é enviado a servidores, ferramentas de análise, URL ou checkout).
 
 ## Onde editar
 
-- Textos das etapas: `src/config/funnel.ts`
-- Reflexões da etapa 5 (uma por resposta da etapa 2): `src/config/results.ts`
-- Preço, bônus, presentes, comunidade e **link de pagamento (`CHECKOUT_URL`)**: `src/config/offer.ts`
-- Imagens: `public/images/` e `src/config/images.ts`
+- **Todos os textos** (início, perguntas, pontuação A/B/C, nome, resultados,
+  oferta, bônus, botões), **preço** e **link de pagamento (`CHECKOUT_URL`)**:
+  `src/config/quizData.ts`
+- Regra de pontuação e desempate: `src/lib/scoring.ts` (testes em `tests/`)
+- Eventos de análise e Meta Pixel: `src/config/analytics.ts`
 - Cores: `src/app/globals.css` · Fontes: `src/config/fonts.ts`
-- Título, descrição e endereço do site: `src/config/brand.ts`
+- Endereço do site para compartilhamento: `src/config/brand.ts`
 - Imagem de compartilhamento (1200x630): `src/app/opengraph-image.png` e `twitter-image.png`
+
+## Testes
+
+```bash
+npm test
+```
+
+Roda os testes da pontuação (vitórias de A, B e C e todos os desempates).
 
 ## Rodar no computador
 
@@ -40,11 +52,9 @@ npm run start
 
 **Pelo GitHub (recomendado: cada alteração publicada atualiza o site sozinha)**
 
-1. Crie um repositório no GitHub chamado `quiz-padroes-no-amor` e envie esta
-   pasta para ele (o GitHub Desktop faz isso: *File → Add Local Repository*).
-2. Em vercel.com: *Add New → Project → Import* o repositório.
-3. A Vercel reconhece o Next.js sozinha. Nome do projeto: `quiz-padroes-no-amor`.
-   Não é preciso configurar variáveis. Clique em *Deploy*.
+O projeto já está ligado ao repositório `Mente2025/quiz.menteemexpansao.com.br`.
+Cada envio para a branch `main` (pelo GitHub Desktop) publica o site; um envio
+para outra branch gera só um link de pré-visualização da Vercel.
 
 **Pela linha de comando (sem GitHub)**
 
