@@ -124,9 +124,9 @@ export const startScreen = {
    * Ao trocar o arquivo, atualize `width` e `height` (tamanho real em pixels).
    */
   image: {
-    src: "/images/tela-inicial-tres-momentos.webp",
-    width: 941,
-    height: 1672,
+    src: "/images/tela-inicial-tres-fases.webp",
+    width: 1752,
+    height: 897,
     alt: "Três momentos de uma mesma mulher, representando a dor do término, a reflexão e o recomeço.",
   },
   button: "Começar o teste (2 minutos)",

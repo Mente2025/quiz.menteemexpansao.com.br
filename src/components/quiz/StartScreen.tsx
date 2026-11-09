@@ -25,7 +25,16 @@ export function StartScreen() {
           {subtitle}
         </p>
 
-        <div className="mt-5 flex max-h-[24rem] min-h-24 flex-1 basis-0 justify-center">
+        <div
+          className="mt-5 flex min-h-24 flex-1 basis-0 items-center justify-center"
+          // Nunca mais alto que a imagem na largura da coluna (evita vãos
+          // em volta de imagens horizontais) e no máximo 24rem.
+          style={{
+            maxHeight: `min(24rem, calc(min(100vw - 2.5rem, 31rem) * ${(
+              image.height / image.width
+            ).toFixed(4)}))`,
+          }}
+        >
           {/* Arquivo original, sem recompressão (cores e aparência preservadas). */}
           <Image
             src={image.src}
@@ -34,7 +43,7 @@ export function StartScreen() {
             alt={image.alt}
             unoptimized
             preload
-            className="h-full w-auto max-w-full object-contain"
+            className="h-auto max-h-full min-h-0 w-auto min-w-0 max-w-full object-contain"
           />
         </div>
 
