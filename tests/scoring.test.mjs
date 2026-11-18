@@ -6,8 +6,9 @@
  * letra de uma opção, estes testes mostram o que mudou.
  */
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
 import { describe, test } from "node:test";
-import { questions, results, offer } from "../src/config/quizData.ts";
+import { questions, results, finalPage, price } from "../src/config/quizData.ts";
 import {
   computeResult,
   pickResult,
@@ -98,11 +99,69 @@ describe("dados do quiz", () => {
     }
   });
 
-  test("há resultado e botão para A, B e C", () => {
+  test("há resultado personalizado com ponto de partida para A, B e C", () => {
     for (const letter of ["A", "B", "C"]) {
       assert.ok(results[letter].title.includes("{nome}"));
-      assert.ok(offer.buttonByResult[letter]);
+      assert.ok(results[letter].startingPoint.phase);
     }
+  });
+
+  test("página final: os três processos, na ordem da copy", () => {
+    assert.deepEqual(
+      finalPage.processes.steps.map((s) => [s.number, s.name]),
+      [
+        [1, "Esvaziamento"],
+        [2, "Consciência"],
+        [3, "Transformação"],
+      ],
+    );
+  });
+
+  test("página final: as 5 imagens existem e os processos têm a mesma escala", () => {
+    const imagens = [
+      finalPage.images.identification,
+      finalPage.images.product,
+      ...finalPage.processes.steps.map((s) => s.image),
+    ];
+    assert.equal(imagens.length, 5);
+    for (const img of imagens) {
+      assert.ok(existsSync(new URL(`../public${img.src}`, import.meta.url)), img.src);
+      assert.ok(img.alt.length > 10, `texto alternativo: ${img.src}`);
+    }
+    const tamanhos = finalPage.processes.steps.map((s) => `${s.image.width}x${s.image.height}`);
+    assert.equal(new Set(tamanhos).size, 1);
+  });
+
+  test("demonstração: 4 a 6 páginas reais do diário, com arquivo existente", () => {
+    const pages = finalPage.demo.diary.pages;
+    assert.ok(pages.length >= 4 && pages.length <= 6);
+    for (const page of pages) {
+      assert.ok(page.pdfPage >= 1 && page.pdfPage <= 34, page.src);
+      assert.ok(existsSync(new URL(`../public${page.src}`, import.meta.url)), page.src);
+      assert.ok(page.alt.length > 10 && page.caption, page.src);
+    }
+    const offerImage = finalPage.offer.image;
+    if (offerImage) {
+      assert.ok(existsSync(new URL(`../public${offerImage.src}`, import.meta.url)), offerImage.src);
+    }
+    const video = finalPage.demo.video.file;
+    if (video) {
+      for (const file of [video.src, video.poster]) {
+        assert.ok(existsSync(new URL(`../public${file}`, import.meta.url)), file);
+      }
+    }
+  });
+
+  test("página final: entrega no 8º dia informada antes da compra", () => {
+    assert.match(finalPage.offer.deliveryNote, /oitavo dia após o pagamento/);
+  });
+
+  test("preço único em todos os textos da página final", () => {
+    assert.equal(price.display, "R$ 19,90");
+    assert.equal(price.amount, 19.9);
+    assert.ok(finalPage.closing.button.endsWith(price.display));
+    const textos = JSON.stringify({ finalPage, results });
+    assert.doesNotMatch(textos, /R\$ ?47|47,00/);
   });
 });
 

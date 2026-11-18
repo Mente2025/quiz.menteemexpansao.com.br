@@ -22,9 +22,18 @@ const noSubscription = () => () => {};
 
 /**
  * Botão de compra: um link normal para a Cakto, já com as UTMs da visita.
+ * Os dois botões da oferta usam este componente, e por isso o mesmo
+ * `CHECKOUT_URL`. O clique conta uma vez por sessão, mesmo com dois botões.
  * Não dispara Purchase — a venda só é confirmada na Cakto.
  */
-export function CheckoutButton({ label }: { label: string }) {
+export function CheckoutButton({
+  label,
+  showArrow = true,
+}: {
+  label: string;
+  /** Seta no fim do botão. Desligue quando o texto já termina com emoji. */
+  showArrow?: boolean;
+}) {
   // No servidor, o link puro; no navegador, o link com as UTMs da visita.
   const href = useSyncExternalStore(
     noSubscription,
@@ -53,8 +62,8 @@ export function CheckoutButton({ label }: { label: string }) {
       rel="noopener"
       className={primaryButtonClass}
     >
-      <span>{label}</span>
-      <ArrowRightIcon className={primaryButtonIconClass} />
+      <span className="text-balance">{label}</span>
+      {showArrow && <ArrowRightIcon className={primaryButtonIconClass} />}
     </a>
   );
 }

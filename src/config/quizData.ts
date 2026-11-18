@@ -53,11 +53,7 @@ export interface ResultContent {
   risk: ResultBlock;
   help: ResultBlock;
   startingPoint: ResultBlock & { phase: string };
-  transition: string;
 }
-
-/** Parágrafo simples ou com um trecho inicial em negrito. */
-export type RichParagraph = string | { strong: string; text: string };
 
 /* ------------------------------------------------------------------ */
 /* Checkout e preço                                                    */
@@ -82,14 +78,17 @@ export const checkout = {
 };
 
 /**
- * PREÇO — mostrado no bloco "Comece hoje".
- * Confira se é o mesmo valor configurado na Cakto.
- * `amount` e `currency` são usados só no evento de checkout da Meta.
+ * PREÇO — único lugar para mudar o valor.
+ * Aparece no bloco da oferta e no botão final ("Conhecer minha jornada por...").
+ * Precisa ser o MESMO valor configurado no produto da Cakto.
+ * `amount` e `currency` vão só no evento de início de checkout da Meta.
+ * `note`: use só enquanto o produto da Cakto for de pagamento único
+ * (sem assinatura).
  */
 export const price = {
-  display: "R$ 47,00",
-  note: "Pagamento único.",
-  amount: 47,
+  display: "R$ 19,90",
+  note: "Pagamento único. Sem mensalidade.",
+  amount: 19.9,
   currency: "BRL",
 };
 
@@ -461,9 +460,6 @@ export const nameScreen = {
 /* Resultados                                                          */
 /* ------------------------------------------------------------------ */
 
-const transition =
-  "Agora, conheça o programa de 21 dias que vai orientar seus próximos passos.";
-
 export const results: Record<Letter, ResultContent> = {
   A: {
     name: "No Meio da Tempestade",
@@ -486,7 +482,6 @@ export const results: Record<Letter, ResultContent> = {
       phase: "Fase 1 — Consciência.",
       text: "O primeiro passo é compreender o que você está sentindo, observar suas reações e começar a cuidar de si sem exigir que tudo esteja resolvido.",
     },
-    transition,
   },
   B: {
     name: "Presa no Que Ficou",
@@ -510,7 +505,6 @@ export const results: Record<Letter, ResultContent> = {
       phase: "Fase 2 — Esvaziamento.",
       text: "Seu foco é observar o que ainda mantém você ligada a essa história e começar a abrir espaço na rotina para novas decisões.",
     },
-    transition,
   },
   C: {
     name: "Pronta para Não Repetir",
@@ -534,140 +528,440 @@ export const results: Record<Letter, ResultContent> = {
       phase: "Fase 3 — Transformação.",
       text: "Seu foco é reconhecer padrões e definir limites mais conscientes para as próximas relações. Percorrer as fases anteriores também ajuda a revisitar o que ficou dessa história.",
     },
-    transition,
   },
 };
 
 /* ------------------------------------------------------------------ */
-/* Oferta (igual nos três resultados)                                  */
+/* Página final (igual nos três resultados)                            */
 /* ------------------------------------------------------------------ */
 
-export const offer = {
-  /** Use {nome}. */
-  title:
-    "{nome}, você não precisa descobrir sozinha o que fazer a cada dia depois do término.",
-  productName: "EU ME ESCOLHO",
-  description: [
-    "Um programa de 21 dias para atravessar o término com um passo a passo diário, entender o que você está sentindo e começar a fazer escolhas diferentes para não repetir a mesma história.",
-    "Em vez de acordar sem saber por onde começar, você terá sessões guiadas e um diário que orienta pequenas atitudes para colocar em prática na vida real.",
-    "O objetivo não é exigir que você esteja bem em 21 dias. É oferecer uma direção para esse período, respeitando o seu ritmo.",
-  ],
+/**
+ * Peças de texto da página final, na ordem em que aparecem:
+ * - "texto"              → parágrafo (trechos entre **asteriscos** ficam em negrito)
+ * - { quote: "..." }     → pergunta em destaque
+ * - { highlight: "..." } → frase de destaque, na cor da marca
+ * - { lines: [...] }     → frases curtas em sequência, com um traço ao lado
+ * - { processes: "..." } → os três processos em destaque
+ */
+export type Piece =
+  | string
+  | { quote: string }
+  | { highlight: string }
+  | { lines: string[] }
+  | { processes: string };
 
-  includedTitle: "O QUE VOCÊ RECEBE AGORA",
+export interface TextBlock {
+  title: string;
+  pieces: Piece[];
+}
 
-  sessions: {
-    title: "7 SESSÕES GUIADAS EM 3 FASES",
-    text: "São 7 sessões guiadas, para ouvir no celular, com fones, no seu horário. Elas estão organizadas em três fases e podem ser revisitadas durante a jornada.",
-    phases: [
+/** Imagem da página final: arquivo em public/images/pagina-final/ (PNG com transparência). */
+export interface PageImage {
+  src: string;
+  /** Tamanho real do arquivo, em pixels. */
+  width: number;
+  height: number;
+  /** Descrição para leitores de tela. */
+  alt: string;
+}
+
+export interface ProcessStep {
+  number: number;
+  name: string;
+  tagline: string;
+  /** Ilustração do processo, acima da descrição. */
+  image: PageImage;
+  pieces: Piece[];
+}
+
+/** Vídeo da plataforma (MP4 H.264, sem áudio) em public/videos/. */
+export interface DemoVideo {
+  src: string;
+  /** Quadro do próprio vídeo usado como capa (em public/videos/). */
+  poster: string;
+  /** Tamanho real do vídeo, em pixels. */
+  width: number;
+  height: number;
+  /** Descrição para leitores de tela. */
+  description: string;
+}
+
+/** Página real do Diário dos 21 Dias, exportada do PDF original. */
+export interface DiaryPage extends PageImage {
+  /** Número da página no PDF original. */
+  pdfPage: number;
+  /** Legenda curta abaixo da miniatura. */
+  caption: string;
+}
+
+export interface IncludedItem {
+  title: string;
+  pieces: Piece[];
+}
+
+/**
+ * Texto aprovado da página final. Ordem: resultado A/B/C → blocos 1 a 8.
+ * Sem depoimentos, contagem regressiva, preço riscado ou escassez.
+ */
+export const finalPage = {
+  /**
+   * Imagens dos blocos (as dos três processos ficam em cada processo).
+   * Ao trocar um arquivo, atualize `width` e `height`.
+   */
+  images: {
+    /** Depois do bloco 2 (conexão), antes do bloco 3. */
+    identification: {
+      src: "/images/pagina-final/identificacao-emocional.png",
+      width: 1122,
+      height: 1402,
+      alt: "Mulher sentada no chão olhando o celular, pensativa, com um diário aberto ao lado.",
+    },
+    /** No bloco 3, logo abaixo do título. */
+    product: {
+      src: "/images/pagina-final/eu-me-escolho-por-dentro.png",
+      width: 1217,
+      height: 1293,
+      alt: "Capa e páginas do Diário dos 21 Dias e três celulares com as sessões Consciência, Esvaziamento e Transformação.",
+    },
+  } satisfies Record<string, PageImage>,
+
+  /** Bloco 1 — logo depois do resultado A, B ou C. */
+  recognition: [
+    "Talvez ninguém perceba o quanto você ainda pensa nessa história.",
+    "Você continua fazendo suas coisas. Conversa com as pessoas. Tenta ocupar a cabeça.",
+    "Mas basta uma música, uma lembrança ou um momento de silêncio para tudo voltar.",
+    "E tem aquela vontade de pegar o celular, abrir a conversa e descobrir se ele também está sentindo sua falta.",
+    "Às vezes, você até se pergunta:",
+    {
+      quote:
+        "“Por que é tão difícil seguir em frente, mesmo sabendo de tudo o que aconteceu?”",
+    },
+    "Se você se reconhece nisso, existe algo que precisa ouvir:",
+    {
+      highlight: "Você não precisa estar bem hoje para começar a cuidar de si.",
+    },
+  ] as Piece[],
+
+  /** Bloco 2 — conexão emocional. */
+  connection: {
+    title: "Você sente falta dele. Mas quem está cuidando de você?",
+    pieces: [
+      "Talvez você tenha passado tanto tempo tentando fazer esse relacionamento dar certo que, aos poucos, foi deixando suas próprias necessidades para depois.",
       {
-        title: "FASE 1 — CONSCIÊNCIA",
-        text: "Entender o que está acontecendo com você, reconhecer seus sentimentos e perceber os momentos em que a saudade fala mais alto.",
+        lines: [
+          "Engoliu coisas que te machucavam.",
+          "Aceitou situações que não queria aceitar.",
+          "Deu mais uma chance quando já estava cansada.",
+        ],
       },
+      "E agora que tudo terminou, ficou uma pergunta difícil:",
+      { quote: "“Como eu volto a ser eu depois de tudo isso?”" },
       {
-        title: "FASE 2 — ESVAZIAMENTO",
-        text: "Observar o que ainda prende você a essa história e praticar pequenas atitudes para lidar com lembranças, contatos e hábitos que dificultam seguir em frente.",
+        lines: [
+          "A verdade é que ninguém ensina o que fazer com a saudade que aparece de madrugada.",
+          "Nem com a vontade de voltar.",
+          "Nem com aquele vazio que surge quando você percebe que a pessoa fazia parte de quase todos os seus planos.",
+        ],
       },
+      "Mas existe uma diferença entre sentir falta de alguém e continuar deixando você mesma para trás.",
+      { highlight: "E é sobre essa diferença que queremos conversar." },
+    ],
+  } satisfies TextBlock,
+
+  /** Bloco 3 — apresentação do produto. */
+  product: {
+    title: "Foi pensando nesses dias que nasceu o Eu Me Escolho. ❤️",
+    pieces: [
       {
-        title: "FASE 3 — TRANSFORMAÇÃO",
-        text: "Reconhecer comportamentos que se repetem nos seus relacionamentos e definir o que você não deseja aceitar novamente.",
+        lines: [
+          "Não para dizer que você precisa esquecer alguém.",
+          "Não para exigir que você seja forte o tempo inteiro.",
+          "E muito menos para prometer que toda essa dor vai desaparecer em 21 dias.",
+        ],
+      },
+      "Mas para que você tenha um caminho a seguir nos dias em que não sabe por onde começar.",
+      "O Eu Me Escolho é uma jornada guiada de 21 dias, com sessões para ouvir, reflexões para escrever e pequenas ações para colocar em prática.",
+      "Um momento do seu dia dedicado a olhar para o que você sente, entender o que viveu e começar a fazer escolhas que também considerem você.",
+      "Porque, talvez, você tenha passado muito tempo esperando que alguém te escolhesse.",
+      {
+        highlight:
+          "Agora é hora de começar a olhar para a pessoa que ficou esperando por você esse tempo todo: você mesma.",
       },
     ],
-  },
+  } satisfies TextBlock,
 
-  diary: {
-    title: "DIÁRIO DOS 21 DIAS",
-    lead: "Um passo a passo para levar o programa para a sua vida real.",
-    paragraphs: [
-      "Durante 21 dias, você encontra uma pequena ação prática de 2 a 5 minutos e uma pergunta para responder em poucas linhas.",
-      "As ações incluem atitudes como arquivar uma conversa, escrever motivos reais do término, passar uma noite sem olhar as redes da pessoa ou guardar objetos que despertam lembranças.",
+  /** Bloco 4 — os três processos. */
+  processes: {
+    title: "Antes de começar de novo, você merece olhar para dentro.",
+    pieces: [
+      "O Eu Me Escolho foi organizado em três processos que se complementam:",
+      { processes: "Esvaziamento. Consciência. Transformação." },
+      "Não são três promessas de mudança instantânea.",
+      "São três etapas de uma jornada de reflexão e prática para ajudar você a deixar de viver apenas em função do que aconteceu.",
+    ] as Piece[],
+    steps: [
       {
-        strong: "Seu Medidor de Recuperação:",
-        text: "nos dias 1, 7, 14 e 21, você registra notas de 0 a 10 sobre quanto pensa na pessoa, a vontade de voltar, sua rotina, sua autoestima e o quanto compreende os comportamentos que se repetem.",
+        number: 1,
+        name: "Esvaziamento",
+        tagline: "Para os dias em que você sente tudo ao mesmo tempo.",
+        image: {
+          src: "/images/pagina-final/processo-esvaziamento.png",
+          width: 1122,
+          height: 1402,
+          alt: "Mulher com um diário aberto olhando para o alto, com traços leves saindo das páginas em direção a um coração.",
+        },
+        pieces: [
+          {
+            lines: [
+              "Você tenta dormir, mas a cabeça não para.",
+              "Lembra do que foi dito.",
+              "Pensa no que poderia ter feito diferente.",
+              "Imagina uma conversa que talvez nunca aconteça.",
+              "E, quanto mais tenta não pensar, mais parece que tudo volta.",
+            ],
+          },
+          "Nesta etapa, você encontra sessões guiadas e exercícios de expressão emocional para acolher o que está sentindo e colocar em palavras aquilo que ficou guardado.",
+          {
+            highlight:
+              "Porque você não precisa continuar fingindo que nada te machucou.",
+          },
+        ],
       },
-      "Assim, você consegue comparar seus próprios registros e observar o que mudou — e o que ainda precisa de atenção.",
-      "No dia 21, você escreve a Carta para o Meu Próximo Relacionamento, com três limites dos quais não deseja mais abrir mão.",
-      "O Diário dos 21 Dias está disponível imediatamente após a compra, junto com as sessões guiadas.",
-    ] as RichParagraph[],
+      {
+        number: 2,
+        name: "Consciência",
+        tagline:
+          "Para entender por que algumas histórias continuam prendendo você.",
+        image: {
+          src: "/images/pagina-final/processo-consciencia.png",
+          width: 1122,
+          height: 1402,
+          alt: "Mulher lendo um diário, pensativa, com linhas emaranhadas ao lado.",
+        },
+        pieces: [
+          {
+            lines: [
+              "Talvez não tenha sido a primeira vez que você aceitou menos do que gostaria.",
+              "Talvez tenha sentido medo de desagradar.",
+              "De ser deixada.",
+              "De dizer o que precisava e perder a pessoa.",
+            ],
+          },
+          "E talvez, por muito tempo, tenha confundido o esforço para manter alguém por perto com a obrigação de abrir mão de si.",
+          "Nesta etapa, você será convidada a olhar para seus comportamentos, necessidades e limites.",
+          "Não para se culpar pelo que viveu.",
+          {
+            highlight:
+              "Mas para começar a reconhecer o que você não quer continuar repetindo.",
+          },
+        ],
+      },
+      {
+        number: 3,
+        name: "Transformação",
+        tagline: "Para que se escolher deixe de ser apenas uma frase bonita.",
+        image: {
+          src: "/images/pagina-final/processo-transformacao.png",
+          width: 1122,
+          height: 1402,
+          alt: "Mulher sorrindo com tranquilidade, segurando um diário com um lírio e o celular.",
+        },
+        pieces: [
+          "Porque dizer “agora vou pensar em mim” é uma coisa.",
+          {
+            lines: [
+              "Mas o que fazer quando ele manda mensagem?",
+              "Quando a saudade aperta?",
+              "Quando você sente vontade de abandonar tudo o que decidiu?",
+            ],
+          },
+          "É nesses momentos que as pequenas escolhas importam.",
+          "Nesta etapa, você trabalha atitudes práticas de cuidado consigo, reflexão sobre limites e retomada da própria rotina.",
+          {
+            lines: [
+              "Mesmo que ele não volte.",
+              "Mesmo que ele volte.",
+              "Mesmo que você ainda sinta saudade.",
+            ],
+          },
+          { highlight: "Sua vida também precisa ter espaço para você." },
+        ],
+      },
+    ] satisfies ProcessStep[],
   },
 
-  bonusesTitle: "E MAIS 3 BÔNUS, LIBERADOS NO 8º DIA",
-  bonuses: [
-    {
-      title: "BÔNUS 1 — PLANO SOS: OS 5 MOMENTOS MAIS DIFÍCEIS",
-      items: [
-        {
-          strong: "O que é:",
-          text: "5 sessões curtas, de 3 a 5 minutos, criadas para situações específicas: vontade de mandar mensagem, ver algo nas redes, uma noite em que a cabeça não para, uma data especial ou a vontade de voltar.",
-        },
-        {
-          strong: "Quando usar:",
-          text: "quando a saudade apertar e você sentir vontade de agir sem pensar nas consequências.",
-        },
-        {
-          strong: "O que você ganha:",
-          text: "um recurso prático para fazer uma pausa, organizar seus pensamentos e considerar sua próxima atitude antes de agir no impulso.",
-        },
-      ],
-    },
-    {
-      title: "BÔNUS 2 — RAIO-X DO SEU PADRÃO AMOROSO",
-      items: [
-        {
-          strong: "O que é:",
-          text: "um teste com perguntas sobre suas atitudes nos relacionamentos, que gera um relatório personalizado com uma descrição dos comportamentos identificados, exemplos de como aparecem no dia a dia e quais sessões priorizar.",
-        },
-        {
-          strong: "Quando usar:",
-          text: "quando quiser compreender por que algumas situações se repetem com pessoas diferentes ou reconhecer atitudes que deseja mudar.",
-        },
-        {
-          strong: "O que você ganha:",
-          text: "uma leitura organizada das suas respostas para refletir sobre seus comportamentos e direcionar melhor sua jornada, sem funcionar como diagnóstico psicológico.",
-        },
-      ],
-    },
-    {
-      title: "BÔNUS 3 — SE ELE TE PROCURAR: GUIA DE RESPOSTAS E DECISÕES",
-      items: [
-        {
-          strong: "O que é:",
-          text: "um guia com sugestões de respostas para mensagens como “oi, sumida”, “podemos conversar?”, “sinto sua falta” e “tudo bem com você?”, além de orientações para refletir sobre bloquear, silenciar ou manter o contato, lidar com fotos e presentes e estabelecer limites com amigos em comum.",
-        },
-        {
-          strong: "Quando usar:",
-          text: "quando a outra pessoa entrar em contato, quando você estiver em dúvida sobre responder ou quando situações do término continuarem aparecendo na sua rotina.",
-        },
-        {
-          strong: "O que você ganha:",
-          text: "exemplos de comunicação e critérios práticos para considerar suas opções antes de tomar uma decisão, sem precisar responder pela pressão do momento.",
-        },
-      ],
-    },
-  ],
-  bonusesNote: "Os três bônus serão liberados no 8º dia após a compra.",
-
-  startToday: {
-    title: "COMECE HOJE",
-    text: "Uma jornada de 21 dias para dedicar atenção a você, um passo de cada vez.",
-    listTitle: "Você recebe:",
+  /** Bloco 5 — como funciona por dentro. */
+  inside: {
+    title: "E como você vai colocar tudo isso em prática?",
+    pieces: [
+      "Imagine reservar alguns minutos do seu dia para parar de pensar apenas no que ele fez, no que ele disse ou no que poderia acontecer.",
+      "E começar a fazer uma pergunta diferente:",
+      { quote: "“Do que eu preciso hoje?”" },
+      "Dentro do Eu Me Escolho, você encontra:",
+    ] as Piece[],
     items: [
-      "Acesso imediato às 7 sessões guiadas.",
-      "Acesso imediato ao Diário dos 21 Dias, com ações práticas, perguntas diárias e Medidor de Recuperação.",
-      "Plano SOS: Os 5 Momentos Mais Difíceis — liberado no 8º dia.",
-      "Raio-X do Seu Padrão Amoroso — liberado no 8º dia.",
-      "Se Ele Te Procurar: Guia de Respostas e Decisões — liberado no 8º dia.",
-    ],
+      {
+        title: "7 sessões guiadas",
+        pieces: [
+          "Conteúdos para ouvir no seu próprio ritmo, organizados nos três processos da jornada.",
+          "Você pode escutar com fones, em um momento tranquilo do seu dia, seguindo as reflexões propostas.",
+        ],
+      },
+      {
+        title: "Diário dos 21 Dias",
+        pieces: [
+          "Um espaço para colocar no papel o que está vivendo.",
+          "A cada dia, você encontra uma pergunta para refletir e uma pequena ação prática.",
+          {
+            lines: [
+              "Não precisa escrever bonito.",
+              "Não precisa ter todas as respostas.",
+            ],
+          },
+          "O diário não é para registrar como você deveria estar se sentindo. É para dar espaço ao que você realmente sente.",
+          { highlight: "Um dia de cada vez." },
+        ],
+      },
+    ] satisfies IncludedItem[],
   },
 
-  /** Botão de compra: muda conforme o resultado. */
-  buttonByResult: {
-    A: "Começar pela Fase 1, Consciência",
-    B: "Começar pela Fase 2, Esvaziamento",
-    C: "Começar pela Fase 3, Transformação",
-  } satisfies Record<Letter, string>,
+  /**
+   * Demonstração do produto — depois do bloco 5 e antes da surpresa.
+   * Só material real: gravação da plataforma e páginas do PDF do diário.
+   */
+  demo: {
+    title: "Veja como é começar a se escolher ❤️",
+    subtitle: "Um espaço para ouvir, refletir e dar pequenos passos por você.",
+    video: {
+      label: "Conheça sua jornada por dentro",
+      /**
+       * Vídeo da plataforma. `null` enquanto a gravação não for enviada:
+       * nesse caso o player não aparece.
+       */
+      file: null as DemoVideo | null,
+    },
+    diary: {
+      title: "Um pequeno passo por dia. Durante 21 dias.",
+      subtitle:
+        "Explore algumas páginas reais do diário que vai acompanhar sua jornada.",
+      /** Páginas reais do PDF "Diário dos 21 Dias — Eu Me Escolho". */
+      pages: [
+        {
+          pdfPage: 1,
+          caption: "Capa",
+          src: "/images/diario/diario-01-capa.png",
+          width: 1223,
+          height: 2176,
+          alt: "Capa do Diário dos 21 Dias: Eu Me Escolho, Mente em Expansão, um passo por dia.",
+        },
+        {
+          pdfPage: 2,
+          caption: "Como usar o diário",
+          src: "/images/diario/diario-02-como-usar.png",
+          width: 1223,
+          height: 2176,
+          alt: "Página Como usar este diário: todo dia há uma ação do dia, uma pergunta do dia e uma sessão sugerida.",
+        },
+        {
+          pdfPage: 8,
+          caption: "Ação do dia",
+          src: "/images/diario/diario-03-acao-do-dia.png",
+          width: 1223,
+          height: 2176,
+          alt: "Dia 2 de 21, Fase 1, Consciência: Tirar da frente dos olhos, com a ação do dia e a pergunta do dia.",
+        },
+        {
+          pdfPage: 19,
+          caption: "Pergunta do dia",
+          src: "/images/diario/diario-04-pergunta-do-dia.png",
+          width: 1223,
+          height: 2176,
+          alt: "Dia 11 de 21, Fase 2, Esvaziamento: Saudade de quem?, com a ação do dia e a pergunta do dia.",
+        },
+        {
+          pdfPage: 4,
+          caption: "Medidor de Recuperação",
+          src: "/images/diario/diario-05-medidor.png",
+          width: 1223,
+          height: 2176,
+          alt: "Medidor de Recuperação: notas de 0 a 10 para cinco frases, preenchidas nos dias 1, 7, 14 e 21.",
+        },
+        {
+          pdfPage: 33,
+          caption: "Carta do dia 21",
+          src: "/images/diario/diario-06-carta-final.png",
+          width: 1223,
+          height: 2176,
+          alt: "Dia 21: Carta para o meu próximo relacionamento, com frases para completar.",
+        },
+      ] satisfies DiaryPage[],
+      /** Textos de interface da galeria. */
+      labels: {
+        region: "Páginas do Diário dos 21 Dias",
+        previous: "Página anterior",
+        next: "Próxima página",
+        goTo: (n: number) => `Ver página ${n}`,
+        zoom: (caption: string) => `Ampliar: ${caption}`,
+        close: "Fechar",
+        counter: (current: number, total: number) => `${current} de ${total}`,
+        tapToZoom: "Toque na página para ampliar",
+      },
+    },
+  },
 
-  buttonNote:
-    "Compra segura pela Cakto. Você tem 7 dias para exercer seu direito de arrependimento, conforme o Código de Defesa do Consumidor.",
+  /** Bloco 6 — uma surpresa especial na jornada. */
+  surprise: {
+    title: "E tem algo que eu ainda não te contei… ❤️",
+    pieces: [
+      "O Eu Me Escolho foi pensado para acompanhar você nos momentos em que decidir se colocar em primeiro lugar parece mais difícil.",
+      "Por isso, além dos três processos de **Esvaziamento, Consciência e Transformação**, preparamos uma surpresa especial para quem começa essa jornada.",
+      "**Não vou revelar todos os detalhes agora.**",
+      "Mas posso adiantar uma coisa:",
+      "Ela foi pensada justamente para aqueles momentos em que a saudade aperta, o passado reaparece e você precisa lembrar por que decidiu começar a cuidar de si.",
+      "**Porque se escolher não é uma decisão que você toma uma única vez. É uma escolha que você aprende a fazer também nos dias difíceis.** ❤️",
+    ],
+  } satisfies TextBlock,
+
+  /** Bloco 7 — oferta. O valor vem de `price`. */
+  offer: {
+    title: "Você passou tanto tempo tentando fazer dar certo com alguém…",
+    pieces: [
+      "E se agora dedicasse um pouco dessa atenção a você?",
+      "Com o **Eu Me Escolho**, você começa uma jornada de 21 dias, organizada em três processos:",
+      { processes: "Esvaziamento. Consciência. Transformação." },
+      "São 7 sessões guiadas e um diário com pequenas ações para ajudar você a olhar para seus sentimentos, compreender seus padrões e começar a fazer escolhas por si.",
+      "E ainda existe **uma surpresa especial preparada para acompanhar sua jornada.** ❤️",
+    ] as Piece[],
+    /**
+     * Imagem do produto completo, logo acima do card de preço (PNG com
+     * transparência). `null` esconde a imagem.
+     */
+    image: {
+      src: "/images/pagina-final/eu-me-escolho-oferta-completa.png",
+      width: 1168,
+      height: 1346,
+      alt: "Eu Me Escolho: plataforma com sessões guiadas, Diário dos 21 Dias e três bônus surpresa.",
+    } as PageImage | null,
+    button: "Quero começar a me escolher ❤️",
+    /**
+     * Condições reais de entrega, visíveis antes da compra (inclui a
+     * liberação no 8º dia). Texto aprovado na etapa anterior.
+     */
+    deliveryNote:
+      "Você terá acesso inicial às sessões guiadas e ao Diário dos 21 Dias. Os três materiais complementares são liberados no oitavo dia após o pagamento.",
+    /** Linha de segurança e direito de arrependimento. "" esconde. */
+    secureNote:
+      "Compra segura pela Cakto. Você tem 7 dias para exercer seu direito de arrependimento, conforme o Código de Defesa do Consumidor.",
+  },
+
+  /**
+   * Bloco 8 — fechamento (texto aprovado na etapa anterior, mantido até o
+   * bloco 8 da nova copy ser definido). O botão usa o mesmo checkout.
+   */
+  closing: {
+    text: "Talvez você ainda pense nele todos os dias. Mas, a partir de hoje, também pode começar a pensar em você.",
+    button: `Conhecer minha jornada por ${price.display}`,
+  },
 
   footer:
     "O Eu Me Escolho é um material de apoio ao desenvolvimento pessoal e não substitui acompanhamento psicológico. Se você estiver passando por um sofrimento muito intenso, procure ajuda profissional. Você também pode ligar gratuitamente para o CVV, no 188.",

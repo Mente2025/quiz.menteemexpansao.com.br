@@ -3,8 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 import { OfferSection } from "@/components/quiz/OfferSection";
+import { Pieces } from "@/components/quiz/Pieces";
 import { QuizShell } from "@/components/quiz/QuizShell";
-import { paths, results, withName } from "@/config/quizData";
+import { finalPage, paths, results, withName } from "@/config/quizData";
 import { trackOnce } from "@/lib/analytics";
 import { cx } from "@/lib/cx";
 import {
@@ -15,7 +16,7 @@ import {
 
 /**
  * Resultado personalizado (A, B ou C) e, logo abaixo, a oferta — uma única
- * vez. Textos: `results` e `offer` em src/config/quizData.ts.
+ * vez. Textos: `results` e `finalPage` em src/config/quizData.ts.
  */
 export function ResultScreen() {
   const router = useRouter();
@@ -71,12 +72,11 @@ export function ResultScreen() {
           </InfoCard>
         </div>
 
-        <p className="mx-auto mt-10 max-w-[30ch] text-balance text-center font-display text-xl leading-snug text-ink">
-          {result.transition}
-        </p>
+        {/* Bloco 1 — logo depois do resultado. */}
+        <Pieces pieces={finalPage.recognition} className="mt-12" />
       </article>
 
-      <OfferSection letter={letter} name={quiz.name} />
+      <OfferSection />
     </QuizShell>
   );
 }
